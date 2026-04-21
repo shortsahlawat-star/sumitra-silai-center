@@ -1,10 +1,24 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, session
 import sqlite3
 import json
 import os
 from datetime import datetime
+from functools import wraps
 
 app = Flask(__name__, static_folder='.')
+app.secret_key = 'tailor_app_secret_key_123'
+
+# Default Admin Credentials
+ADMIN_USERNAME = 'admin'
+ADMIN_PASSWORD = 'admin678'
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('logged_in'):
+            return jsonify({"error": "Unauthorized"}), 401
+        return f(*args, **kwargs)
+    return decorated_function
 
 DB_FILE = 'tailor.sqlite3'
 
@@ -41,7 +55,29 @@ def index():
 def static_files(path):
     return send_from_directory('.', path)
 
+@app.route('/api/login', methods=['POST'])
+def login():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+    if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+        session['logged_in'] = True
+        return jsonify({"success": True})
+    return jsonify({"success": False, "error": "Invalid username or password"}), 401
+
+@app.route('/api/logout', methods=['POST'])
+def logout():
+    session.pop('logged_in', None)
+    return jsonify({"success": True})
+
+@app.route('/api/check_auth', methods=['GET'])
+def check_auth():
+    if session.get('logged_in'):
+        return jsonify({"logged_in": True})
+    return jsonify({"logged_in": False})
+
 @app.route('/api/customers', methods=['GET'])
+@login_required
 def get_customers():
     conn = get_db()
     rows = conn.execute("SELECT * FROM customers ORDER BY date_updated DESC").fetchall()
@@ -62,6 +98,7 @@ def get_customers():
     return jsonify(customers)
 
 @app.route('/api/customers', methods=['POST'])
+@login_required
 def add_customer():
     data = request.json
     name = data.get('name').strip()
@@ -116,6 +153,7 @@ def add_customer():
     return jsonify({"success": True})
 
 @app.route('/api/customers/<int:cust_id>/update', methods=['POST'])
+@login_required
 def update_customer_entry(cust_id):
     data = request.json
     amount_to_add = float(data.get('amount', 0))
@@ -162,6 +200,7 @@ def update_customer_entry(cust_id):
     return jsonify({"success": True})
 
 @app.route('/api/customers/<int:cust_id>', methods=['DELETE'])
+@login_required
 def delete_customer(cust_id):
     conn = get_db()
     conn.execute("DELETE FROM customers WHERE id = ?", (cust_id,))
@@ -170,6 +209,7 @@ def delete_customer(cust_id):
     return jsonify({"success": True})
 
 @app.route('/api/earnings/history', methods=['GET'])
+@login_required
 def earnings_history():
     conn = get_db()
     customers = conn.execute("SELECT payments FROM customers").fetchall()
@@ -187,6 +227,7 @@ def earnings_history():
     return jsonify(sorted_history)
 
 @app.route('/api/dashboard', methods=['GET'])
+@login_required
 def dashboard_stats():
     conn = get_db()
     customers = conn.execute("SELECT * FROM customers").fetchall()
