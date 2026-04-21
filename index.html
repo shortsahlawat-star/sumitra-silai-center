@@ -19,7 +19,30 @@
 </head>
 
 <body>
-    <div class="app-container">
+    <div id="loginContainer" class="login-container" style="display: none; height: 100vh; justify-content: center; align-items: center; background: var(--bg-body);">
+        <div class="card" style="width: 100%; max-width: 400px; padding: 2rem;">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <i class="ph-fill ph-scissors" style="font-size: 3rem; color: var(--primary);"></i>
+                <h2>Admin Login</h2>
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="loginUsername" required placeholder="Enter username">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" required placeholder="Enter password">
+                </div>
+                <div class="text-center">
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Login</button>
+                </div>
+            </form>
+            <div id="loginError" style="color: var(--danger); margin-top: 1rem; text-align: center; display: none;"></div>
+        </div>
+    </div>
+
+    <div class="app-container" style="display: none;">
         <header class="app-header">
             <div class="logo">
                 <i class="ph-fill ph-scissors"></i>
@@ -33,6 +56,10 @@
                 <button id="openAddModalBtn" class="btn btn-primary">
                     <i class="ph ph-plus-circle"></i>
                     Add Customer
+                </button>
+                <button id="logoutBtn" class="btn btn-outline" style="margin-left: 0.5rem;">
+                    <i class="ph ph-sign-out"></i>
+                    Logout
                 </button>
             </div>
         </header>
