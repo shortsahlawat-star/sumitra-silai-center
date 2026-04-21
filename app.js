@@ -29,14 +29,35 @@ const pendingAmountInput = document.getElementById('pendingAmount');
 const updateDressItemsContainer = document.getElementById('updateDressItemsContainer');
 const updateAddDressItemBtn = document.getElementById('updateAddDressItemBtn');
 
+// Auth State
+const loginContainer = document.getElementById('loginContainer');
+const appContainer = document.querySelector('.app-container');
+
 // Initialize App
 async function init() {
     setupEventListeners();
-    await fetchData();
+    await checkAuth();
     
     // Add one empty dress item by default if form is empty
     if(dressItemsContainer.children.length === 0) {
         addDressItem(dressItemsContainer);
+    }
+}
+
+async function checkAuth() {
+    try {
+        const res = await fetch('/api/check_auth');
+        const data = await res.json();
+        if (data.logged_in) {
+            loginContainer.style.display = 'none';
+            appContainer.style.display = 'block';
+            await fetchData();
+        } else {
+            loginContainer.style.display = 'flex';
+            appContainer.style.display = 'none';
+        }
+    } catch (err) {
+        console.error("Auth check failed", err);
     }
 }
 
@@ -434,6 +455,46 @@ function closeModal(id) { document.getElementById(id).classList.remove('active')
 
 // Event Listeners Setup
 function setupEventListeners() {
+    // Auth
+    document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const u = document.getElementById('loginUsername').value;
+        const p = document.getElementById('loginPassword').value;
+        try {
+            const res = await fetch('/api/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({username: u, password: p})
+            });
+            const data = await res.json();
+            if (data.success) {
+                document.getElementById('loginError').style.display = 'none';
+                loginContainer.style.display = 'none';
+                appContainer.style.display = 'block';
+                await fetchData();
+            } else {
+                const errDiv = document.getElementById('loginError');
+                errDiv.textContent = data.error || "Login failed";
+                errDiv.style.display = 'block';
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    });
+
+    document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+        try {
+            await fetch('/api/logout', { method: 'POST' });
+            loginContainer.style.display = 'flex';
+            appContainer.style.display = 'none';
+            // Clear input fields
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+        } catch (err) {
+            console.error(err);
+        }
+    });
+
     // Top Action Buttons
     document.getElementById('openAddModalBtn').addEventListener('click', () => openModal('addCustomerModal'));
     document.getElementById('exportBtn').addEventListener('click', exportToCSV);
