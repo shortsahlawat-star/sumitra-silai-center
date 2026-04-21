@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sumitra Silai Center - Payments</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="logo">
+                <i class="ph-fill ph-scissors"></i>
+                <h1>Sumitra Silai Center</h1>
+            </div>
+            <div class="header-actions">
+                <button id="exportBtn" class="btn btn-secondary">
+                    <i class="ph ph-download-simple"></i>
+                    Export CSV
+                </button>
+                <button id="openAddModalBtn" class="btn btn-primary">
+                    <i class="ph ph-plus-circle"></i>
+                    Add Customer
+                </button>
+            </div>
+        </header>
+
+        <main>
+            <!-- Dashboard Cards -->
+            <section class="dashboard">
+                <div class="card stat-card total-pending">
+                    <div class="stat-icon"><i class="ph ph-wallet"></i></div>
+                    <div class="stat-details">
+                        <span class="stat-label">Total Pending</span>
+                        <h2 class="stat-value" id="dashTotalPending">₹0</h2>
+                    </div>
+                </div>
+                <div class="card stat-card total-collected">
+                    <div class="stat-icon"><i class="ph ph-piggy-bank"></i></div>
+                    <div class="stat-details">
+                        <span class="stat-label">Total Collected</span>
+                        <h2 class="stat-value" id="dashTotalCollected">₹0</h2>
+                    </div>
+                </div>
+                <div class="card stat-card monthly-earning" id="monthlyEarningCard" style="cursor: pointer;"
+                    title="Click to view history">
+                    <div class="stat-icon"><i class="ph ph-chart-line-up"></i></div>
+                    <div class="stat-details">
+                        <span class="stat-label">This Month Earning</span>
+                        <h2 class="stat-value" id="dashMonthlyEarning">₹0</h2>
+                    </div>
+                </div>
+                <div class="card stat-card total-customers" id="totalCustomersCard" style="cursor: pointer;"
+                    title="Click to view directory">
+                    <div class="stat-icon"><i class="ph ph-users"></i></div>
+                    <div class="stat-details">
+                        <span class="stat-label">Total Customers</span>
+                        <h2 class="stat-value" id="dashTotalCustomers">0</h2>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Filters and Search -->
+            <section class="controls">
+                <div class="search-bar">
+                    <i class=""></i>
+                    <input type="text" id="searchInput" placeholder="Search by name or mobile number...">
+                </div>
+                <div class="filter-group">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="pending">Pending</button>
+                    <button class="filter-btn" data-filter="paid">Paid</button>
+                </div>
+            </section>
+
+            <!-- Customer List -->
+            <section class="customer-list" id="customerList">
+                <!-- Customer cards will be injected here by JS -->
+            </section>
+        </main>
+    </div>
+
+    <!-- Add Customer Modal -->
+    <div id="addCustomerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>New Customer Entry</h2>
+                <button class="close-modal" id="closeAddModalBtn"><i class="ph ph-x"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="addCustomerForm">
+                    <div class="form-group">
+                        <label for="custName">Customer Name *</label>
+                        <input type="text" id="custName" required placeholder="e.g. Rahul Sharma">
+                    </div>
+                    <div class="form-group">
+                        <label for="custPhone">Phone Number (Optional)</label>
+                        <input type="tel" id="custPhone" placeholder="e.g. 9876543210">
+                    </div>
+
+                    <div class="dress-details-section">
+                        <div class="section-header">
+                            <h3>Dress Details</h3>
+                            <button type="button" id="addDressItemBtn" class="btn btn-sm btn-text">
+                                <i class="ph ph-plus"></i> Add Item
+                            </button>
+                        </div>
+                        <div id="dressItemsContainer">
+                            <!-- Dynamic dress items will go here -->
+                        </div>
+                    </div>
+
+                    <div class="payment-summary-section">
+                        <div class="form-group row">
+                            <label>Total Amount:</label>
+                            <span class="currency-prefix">₹<input type="number" id="totalAmount" readonly
+                                    value="0"></span>
+                        </div>
+                        <div class="form-group row">
+                            <label for="paidAmount">Paid Amount:</label>
+                            <span class="currency-prefix highlight">₹<input type="number" id="paidAmount" required
+                                    min="0" value="0"></span>
+                        </div>
+                        <div class="form-group row pending-row">
+                            <label>Pending Amount:</label>
+                            <span class="currency-prefix">₹<input type="number" id="pendingAmount" readonly
+                                    value="0"></span>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelAddBtn">Cancel</button>
+                <button class="btn btn-primary" id="saveCustomerBtn">Save Entry</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Order Modal -->
+    <div id="updateOrderModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Update Customer Entry</h2>
+                <button class="close-modal" id="closeUpdateModalBtn"><i class="ph ph-x"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="customer-info-mini"
+                    style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);">
+                    <p>Customer: <strong id="updateCustName"></strong></p>
+                    <p>Current Pending: <strong class="text-danger">₹<span id="updateCurrentPending"></span></strong>
+                    </p>
+                </div>
+
+                <div class="dress-details-section">
+                    <div class="section-header">
+                        <h3>Add New Dress Items (Optional)</h3>
+                        <button type="button" id="updateAddDressItemBtn" class="btn btn-sm btn-text">
+                            <i class="ph ph-plus"></i> Add Item
+                        </button>
+                    </div>
+                    <div id="updateDressItemsContainer">
+                        <!-- Dynamic dress items will go here -->
+                    </div>
+                </div>
+
+                <div class="form-group mt-3">
+                    <label for="newPaymentAmount">Add Payment Amount (Optional)</label>
+                    <div class="input-with-button">
+                        <span class="currency-prefix">₹<input type="number" id="newPaymentAmount" min="0"
+                                value="0"></span>
+                        <button class="btn btn-sm btn-outline" id="markFullPaidBtn">Pay Full Pending</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelUpdateBtn">Cancel</button>
+                <button class="btn btn-primary" id="saveUpdateBtn">Save Update</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Earnings History Modal -->
+    <div id="earningsModal" class="modal">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h2>Monthly Earnings History</h2>
+                <button class="close-modal" id="closeEarningsModalBtn"><i class="ph ph-x"></i></button>
+            </div>
+            <div class="modal-body">
+                <ul id="earningsList" style="list-style: none; padding: 0;">
+                    <!-- Earnings loaded here -->
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Details Modal -->
+    <div id="customerDetailsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Customer Details</h2>
+                <button class="close-modal" id="closeCustomerDetailsModalBtn"><i class="ph ph-x"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="customer-info-mini" style="margin-bottom: 1.5rem;">
+                    <h3 id="detailCustName" style="margin-bottom: 0.25rem;"></h3>
+                    <p id="detailCustPhone" class="text-muted text-sm"></p>
+                </div>
+
+                <div
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; background: var(--bg); padding: 1rem; border-radius: var(--radius-md);">
+                    <div>
+                        <span class="text-sm text-muted">Total Amount</span>
+                        <h3 id="detailTotalAmount">₹0</h3>
+                    </div>
+                    <div>
+                        <span class="text-sm text-muted">Paid Amount</span>
+                        <h3 id="detailPaidAmount" class="text-success">₹0</h3>
+                    </div>
+                    <div style="grid-column: 1 / -1;">
+                        <span class="text-sm text-muted">Pending Amount</span>
+                        <h3 id="detailPendingAmount" class="text-danger">₹0</h3>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <h4 style="margin-bottom: 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">
+                        Dress Items</h4>
+                    <ul id="detailDressItems" style="list-style: none; padding: 0;">
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 style="margin-bottom: 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">
+                        Payment History</h4>
+                    <ul id="detailPayments" style="list-style: none; padding: 0;">
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Customers Modal -->
+    <div id="customersModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Total Customers Directory</h2>
+                <button class="close-modal" id="closeCustomersModalBtn"><i class="ph ph-x"></i></button>
+            </div>
+            <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid var(--border);">
+                            <th style="padding: 0.5rem;">Name</th>
+                            <th style="padding: 0.5rem;">Phone</th>
+                            <th style="padding: 0.5rem;">Paid</th>
+                            <th style="padding: 0.5rem;">Pending</th>
+                        </tr>
+                    </thead>
+                    <tbody id="customersTableBody">
+                        <!-- Customers loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
